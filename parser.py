@@ -19,18 +19,6 @@ languages = [
 url = "https://career.habr.com/api/frontend/vacancies"
 
 base_params = {"locations[]": "c_678"}
-result = {}
-
-for lang in languages:
-    params = base_params.copy()
-    params["q"] = f"{lang}"
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
-    result[lang] = data["meta"]["totalResults"]
-
-print(result)
-print()
 
 
 def predict_rub_salary(vacancy):
@@ -51,6 +39,36 @@ def predict_rub_salary(vacancy):
         return salary_to * 0.8
     else:
         return None
+
+
+result = {}
+
+for lang in languages:
+    params = base_params.copy()
+    params["q"] = f"{lang}"
+    response = requests.get(url, params=params)
+    response.raise_for_status()
+    data = response.json()
+
+    vacancies_found = data["meta"]["totalResults"]
+
+    salaries = []
+    for vacancy in data["list"]:
+        salary = predict_rub_salary(vacancy)
+        if salary is not None:
+            salaries.append(salary)
+
+    vacancies_processed = len(salaries)
+    avarage_salary = int(sum(salaries) / len(salaries)) if salaries else None
+
+    result[lang] = {
+        "vacancies_found": vacancies_found,
+        "vacancies_processed": vacancies_processed,
+        "average_salary": avarage_salary,
+    }
+
+print(result)
+print()
 
 
 params_py = {"locations[]": "c_678", "q": "Python"}
