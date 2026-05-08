@@ -30,3 +30,12 @@ for lang in languages:
     result[lang] = data["meta"]["totalResults"]
 
 print(result)
+print()
+
+params_py = {"locations[]": "c_678", "q": "Python"}
+response_py = requests.get(url, params=params_py)
+response_py.raise_for_status()
+data_py = response_py.json()
+
+for vacancy in data_py["list"]:
+    print(vacancy["salary"])
