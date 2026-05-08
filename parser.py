@@ -45,50 +45,61 @@ def predict_rub_salary(vacancy):
 
 result = {}
 
-for lang in languages:
-    params = base_params.copy()
-    params["q"] = f"{lang}"
-    params["per_page"] = 50
 
-    response = requests.get(url, params=params)
-    response.raise_for_status()
-    data = response.json()
+def parse_from_habr():
+    for lang in languages:
+        params = base_params.copy()
+        params["q"] = f"{lang}"
+        params["per_page"] = 50
 
-    vacancies_found = data["meta"]["totalResults"]
-    total_pages = data["meta"]["totalPages"]
-    all_vacancies = []
-
-    for page in range(1, total_pages + 1):
-        params["page"] = page
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
-        all_vacancies.extend(data["list"])
-        # time.sleep(0.5)
 
-    salaries = []
-    for vacancy in all_vacancies:
-        salary = predict_rub_salary(vacancy)
-        if salary is not None:
-            salaries.append(salary)
+        vacancies_found = data["meta"]["totalResults"]
+        total_pages = data["meta"]["totalPages"]
+        all_vacancies = []
 
-    vacancies_processed = len(salaries)
-    average_salary = int(sum(salaries) / len(salaries)) if salaries else None
+        for page in range(1, total_pages + 1):
+            params["page"] = page
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+            all_vacancies.extend(data["list"])
+            # time.sleep(0.5)
 
-    result[lang] = {
-        "vacancies_found": vacancies_found,
-        "vacancies_processed": vacancies_processed,
-        "average_salary": average_salary,
-    }
+        salaries = []
+        for vacancy in all_vacancies:
+            salary = predict_rub_salary(vacancy)
+            if salary is not None:
+                salaries.append(salary)
 
-print(result)
-print()
+        vacancies_processed = len(salaries)
+        average_salary = (
+            int(sum(salaries) / len(salaries)) if salaries else None
+        )
+
+        result[lang] = {
+            "vacancies_found": vacancies_found,
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
+        }
+
+    print(result)
+    print()
+
+    params_py = {"locations[]": "c_678", "q": "Python"}
+    response_py = requests.get(url, params=params_py)
+    response_py.raise_for_status()
+    data_py = response_py.json()
+
+    for vacancy in data_py["list"]:
+        print(predict_rub_salary(vacancy))
 
 
-params_py = {"locations[]": "c_678", "q": "Python"}
-response_py = requests.get(url, params=params_py)
-response_py.raise_for_status()
-data_py = response_py.json()
+def main():
+    parse_from_habr()
 
-for vacancy in data_py["list"]:
-    print(predict_rub_salary(vacancy))
+
+if __name__ == "__main__":
+    main()
