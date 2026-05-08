@@ -1,3 +1,5 @@
+import time
+
 import requests
 
 
@@ -46,25 +48,37 @@ result = {}
 for lang in languages:
     params = base_params.copy()
     params["q"] = f"{lang}"
+    params["per_page"] = 50
+
     response = requests.get(url, params=params)
     response.raise_for_status()
     data = response.json()
 
     vacancies_found = data["meta"]["totalResults"]
+    total_pages = data["meta"]["totalPages"]
+    all_vacancies = []
+
+    for page in range(1, total_pages + 1):
+        params["page"] = page
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        all_vacancies.extend(data["list"])
+        # time.sleep(0.5)
 
     salaries = []
-    for vacancy in data["list"]:
+    for vacancy in all_vacancies:
         salary = predict_rub_salary(vacancy)
         if salary is not None:
             salaries.append(salary)
 
     vacancies_processed = len(salaries)
-    avarage_salary = int(sum(salaries) / len(salaries)) if salaries else None
+    average_salary = int(sum(salaries) / len(salaries)) if salaries else None
 
     result[lang] = {
         "vacancies_found": vacancies_found,
         "vacancies_processed": vacancies_processed,
-        "average_salary": avarage_salary,
+        "average_salary": average_salary,
     }
 
 print(result)
