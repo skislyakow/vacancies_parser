@@ -1,6 +1,8 @@
+import os
 import time
 
 import requests
+from environs import Env
 
 
 languages = [
@@ -18,7 +20,9 @@ languages = [
     "Swift",
 ]
 
-url = "https://career.habr.com/api/frontend/vacancies"
+habr_url = "https://career.habr.com/api/frontend/vacancies"
+superjob_url = "https://api.superjob.ru/2.0/vacancies/"
+
 
 base_params = {"locations[]": "c_678"}
 
@@ -46,13 +50,22 @@ def predict_rub_salary(vacancy):
 result = {}
 
 
-def parse_from_habr():
+def parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20):
+    headers = {"X-Api-App-Id": superjob_app_id}
+    params = {"page": page, "count": count}
+    response = requests.get(superjob_url, headers=headers, params=params)
+    data = response.json()
+    for vacancy in data.get("objects", []):
+        print(vacancy["profession"])
+
+
+def parse_from_habr(habr_url):
     for lang in languages:
         params = base_params.copy()
         params["q"] = f"{lang}"
         params["per_page"] = 50
 
-        response = requests.get(url, params=params)
+        response = requests.get(habr_url, params=params)
         response.raise_for_status()
         data = response.json()
 
@@ -62,7 +75,7 @@ def parse_from_habr():
 
         for page in range(1, total_pages + 1):
             params["page"] = page
-            response = requests.get(url, params=params)
+            response = requests.get(habr_url, params=params)
             response.raise_for_status()
             data = response.json()
             all_vacancies.extend(data["list"])
@@ -89,7 +102,7 @@ def parse_from_habr():
     print()
 
     params_py = {"locations[]": "c_678", "q": "Python"}
-    response_py = requests.get(url, params=params_py)
+    response_py = requests.get(habr_url, params=params_py)
     response_py.raise_for_status()
     data_py = response_py.json()
 
@@ -98,7 +111,13 @@ def parse_from_habr():
 
 
 def main():
-    parse_from_habr()
+    env = Env()
+    env.read_env()
+    superjob_app_id = env.str("SUPERJOB_APP_ID")
+    # parse_from_habr()
+
+    print(parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20))
+    pass
 
 
 if __name__ == "__main__":
