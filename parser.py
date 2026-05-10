@@ -52,11 +52,16 @@ result = {}
 
 def parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20):
     headers = {"X-Api-App-Id": superjob_app_id}
-    params = {"page": page, "count": count}
+    params = {
+        "page": page,
+        "count": count,
+        "town": 4,
+        "catalogues": 48,
+    }
     response = requests.get(superjob_url, headers=headers, params=params)
     data = response.json()
     for vacancy in data.get("objects", []):
-        print(vacancy["profession"])
+        print(f"{vacancy['profession']}, {vacancy['town']['title']}")
 
 
 def parse_from_habr(habr_url):
@@ -117,6 +122,8 @@ def main():
     # parse_from_habr()
 
     print(parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20))
+    # Получить ID Москвы
+
     pass
 
 
