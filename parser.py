@@ -26,6 +26,19 @@ superjob_url = "https://api.superjob.ru/2.0/vacancies/"
 
 base_params = {"locations[]": "c_678"}
 
+result = {}
+
+
+def predict_salary(salary_from, salary_to):
+    if salary_from and salary_to:
+        return (salary_from + salary_to) / 2
+    elif salary_from:
+        return salary_from * 1.2
+    elif salary_to:
+        return salary_to * 0.8
+    else:
+        return None
+
 
 def predict_rub_salary(vacancy):
     salary = vacancy["salary"]
@@ -33,7 +46,9 @@ def predict_rub_salary(vacancy):
         return None
     if salary.get("currency") != "rur":
         return None
+    return predict_salary(salary.get("from"), salary.get("to"))
 
+    """
     salary_from = salary.get("from")
     salary_to = salary.get("to")
 
@@ -45,9 +60,21 @@ def predict_rub_salary(vacancy):
         return salary_to * 0.8
     else:
         return None
+    """
 
 
-result = {}
+def predict_rub_salary_superjob(vacancy):
+    if vacancy.get("currency") != "rub":
+        return None
+    if (
+        vacancy.get("agreement")
+        and not vacancy.get("payment_from")
+        and not vacancy.get("payment_to:")
+    ):
+        return None
+    return predict_salary(
+        vacancy.get("payment_from"), vacancy.get("payment_to")
+    )
 
 
 def parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20):
@@ -61,7 +88,8 @@ def parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20):
     response = requests.get(superjob_url, headers=headers, params=params)
     data = response.json()
     for vacancy in data.get("objects", []):
-        print(f"{vacancy['profession']}, {vacancy['town']['title']}")
+        salary = predict_rub_salary_superjob(vacancy)
+        print(f"{vacancy['profession']}, {vacancy['town']['title']}, {salary}")
 
 
 def parse_from_habr(habr_url):
