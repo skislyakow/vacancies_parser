@@ -1,5 +1,6 @@
 import requests
 from environs import Env
+from terminaltables import AsciiTable
 
 
 languages = [
@@ -67,7 +68,7 @@ def parse_from_superjob(superjob_url, superjob_app_id, languages):
                 "page": page,
                 "count": 100,
                 "town": 4,
-                "catalogues": 48,
+                # "catalogues": 33,
                 "keyword": lang,
                 "no_agreement": 1,
             }
@@ -79,7 +80,8 @@ def parse_from_superjob(superjob_url, superjob_app_id, languages):
             all_vacancies.extend(vacancies)
             if not data.get("more"):
                 break
-        page += 1
+            page += 1
+
         salaries = []
         for vacancy in all_vacancies:
             salary = predict_rub_salary_superjob(vacancy)
@@ -96,6 +98,7 @@ def parse_from_superjob(superjob_url, superjob_app_id, languages):
             "vacancies_processed": vacancies_processed,
             "average_salary": average_salary,
         }
+    print_statistics(result)
     return result
 
 
@@ -140,7 +143,7 @@ def parse_from_habr(habr_url):
             "average_salary": average_salary,
         }
 
-    print(result)
+    print_statistics(result)
     print()
 
     params_py = {"locations[]": "c_678", "q": "Python"}
@@ -152,12 +155,34 @@ def parse_from_habr(habr_url):
         print(predict_rub_salary(vacancy))
 
 
+def print_statistics(statistics):
+    table_data = [
+        [
+            "Язык программирования",
+            "Вакансий найдено",
+            "Вакансий обработано",
+            "Средняя зарплата",
+        ]
+    ]
+    for lang, data in statistics.items():
+        table_data.append(
+            [
+                lang,
+                data["vacancies_found"],
+                data["vacancies_processed"],
+                data["average_salary"],
+            ]
+        )
+    table = AsciiTable(table_data)
+    print(table.table)
+
+
 def main():
     env = Env()
     env.read_env()
     superjob_app_id = env.str("SUPERJOB_APP_ID")
 
-    print(parse_from_superjob(superjob_url, superjob_app_id, languages))
+    parse_from_superjob(superjob_url, superjob_app_id, languages)
 
 
 if __name__ == "__main__":
