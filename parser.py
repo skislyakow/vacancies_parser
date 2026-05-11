@@ -1,6 +1,3 @@
-import os
-import time
-
 import requests
 from environs import Env
 
@@ -24,11 +21,6 @@ habr_url = "https://career.habr.com/api/frontend/vacancies"
 superjob_url = "https://api.superjob.ru/2.0/vacancies/"
 
 
-base_params = {"locations[]": "c_678"}
-
-result = {}
-
-
 def predict_salary(salary_from, salary_to):
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
@@ -48,20 +40,6 @@ def predict_rub_salary(vacancy):
         return None
     return predict_salary(salary.get("from"), salary.get("to"))
 
-    """
-    salary_from = salary.get("from")
-    salary_to = salary.get("to")
-
-    if salary_from and salary_to:
-        return (salary_from + salary_to) / 2
-    elif salary_from:
-        return salary_from * 1.2
-    elif salary_to:
-        return salary_to * 0.8
-    else:
-        return None
-    """
-
 
 def predict_rub_salary_superjob(vacancy):
     if vacancy.get("currency") != "rub":
@@ -69,7 +47,7 @@ def predict_rub_salary_superjob(vacancy):
     if (
         vacancy.get("agreement")
         and not vacancy.get("payment_from")
-        and not vacancy.get("payment_to:")
+        and not vacancy.get("payment_to")
     ):
         return None
     return predict_salary(
@@ -77,22 +55,53 @@ def predict_rub_salary_superjob(vacancy):
     )
 
 
-def parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20):
+def parse_from_superjob(superjob_url, superjob_app_id, languages):
+    result = {}
     headers = {"X-Api-App-Id": superjob_app_id}
-    params = {
-        "page": page,
-        "count": count,
-        "town": 4,
-        "catalogues": 48,
-    }
-    response = requests.get(superjob_url, headers=headers, params=params)
-    data = response.json()
-    for vacancy in data.get("objects", []):
-        salary = predict_rub_salary_superjob(vacancy)
-        print(f"{vacancy['profession']}, {vacancy['town']['title']}, {salary}")
+
+    for lang in languages:
+        all_vacancies = []
+        page = 0
+        while True:
+            params = {
+                "page": page,
+                "count": 100,
+                "town": 4,
+                "catalogues": 48,
+                "keyword": lang,
+                "no_agreement": 1,
+            }
+            response = requests.get(
+                superjob_url, headers=headers, params=params
+            )
+            data = response.json()
+            vacancies = data.get("objects", [])
+            all_vacancies.extend(vacancies)
+            if not data.get("more"):
+                break
+        page += 1
+        salaries = []
+        for vacancy in all_vacancies:
+            salary = predict_rub_salary_superjob(vacancy)
+            if salary is not None:
+                salaries.append(salary)
+
+        vacancies_found = data.get("total", 0)
+        vacancies_processed = len(salaries)
+        average_salary = (
+            int(sum(salaries) / len(salaries)) if salaries else None
+        )
+        result[lang] = {
+            "vacancies_found": vacancies_found,
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
+        }
+    return result
 
 
 def parse_from_habr(habr_url):
+    base_params = {"locations[]": "c_678"}
+    result = {}
     for lang in languages:
         params = base_params.copy()
         params["q"] = f"{lang}"
@@ -147,12 +156,8 @@ def main():
     env = Env()
     env.read_env()
     superjob_app_id = env.str("SUPERJOB_APP_ID")
-    # parse_from_habr()
 
-    print(parse_from_superjob(superjob_url, superjob_app_id, page=0, count=20))
-    # Получить ID Москвы
-
-    pass
+    print(parse_from_superjob(superjob_url, superjob_app_id, languages))
 
 
 if __name__ == "__main__":
