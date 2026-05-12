@@ -6,11 +6,29 @@
 Как установить
 
 1. Клонируйте репозиторий
-2. Создайте виртуальное окружение: `python -m venv .venv`
-3. Активируйте его: `.venv\Scripts\activate` (Windows) или `source .venv/bin/activate` (Linux/macOS)
-4. Установите зависимости: `pip install -r requirements.txt`
+2. Создайте виртуальное окружение:
+```bash
+python -m venv .venv
+```
+
+3. Активируйте его:
+```bash
+.venv\Scripts\activate  # Windows
+# или
+source .venv/bin/activate  # Linux/macOS
+```
+
+4. Установите зависимости:
+```bash
+pip install -r requirements.txt
+```
+
 5. Создайте файл `.env` с содержимым `SUPERJOB_APP_ID=ваш_ключ_api`
-6. Запустите: `python parser.py`
+
+6. Запустите:
+```bash
+python parser.py
+```
 
 Цель проекта
 
