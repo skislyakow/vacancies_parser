@@ -42,7 +42,7 @@ def parse_from_superjob(languages):
     env.read_env()
     superjob_url = "https://api.superjob.ru/2.0/vacancies/"
     title = "SuperJob"
-    result = {}
+    salary_statistics = {}
     headers = {"X-Api-App-Id": env.str("SUPERJOB_APP_ID")}
 
     for lang in languages:
@@ -77,12 +77,12 @@ def parse_from_superjob(languages):
         average_salary = (
             int(sum(salaries) / len(salaries)) if salaries else None
         )
-        result[lang] = {
+        salary_statistics[lang] = {
             "vacancies_found": vacancies_found,
             "vacancies_processed": vacancies_processed,
             "average_salary": average_salary,
         }
-    print_statistics(result, title)
+    print_statistics(salary_statistics, title)
     print()
 
 
@@ -90,7 +90,7 @@ def parse_from_habr(languages):
     habr_url = "https://career.habr.com/api/frontend/vacancies"
     title = "Habr"
     base_params = {"locations[]": "c_678"}
-    result = {}
+    salary_statistics = {}
     for lang in languages:
         params = base_params.copy()
         params["q"] = f"{lang}"
@@ -122,13 +122,13 @@ def parse_from_habr(languages):
             int(sum(salaries) / len(salaries)) if salaries else None
         )
 
-        result[lang] = {
+        salary_statistics[lang] = {
             "vacancies_found": vacancies_found,
             "vacancies_processed": vacancies_processed,
             "average_salary": average_salary,
         }
 
-    print_statistics(result, title)
+    print_statistics(salary_statistics, title)
     print()
 
 
