@@ -102,9 +102,9 @@ def parse_from_habr(languages):
 
         vacancies_found = data["meta"]["totalResults"]
         total_pages = data["meta"]["totalPages"]
-        all_vacancies = []
+        all_vacancies = data["list"]
 
-        for page in range(1, total_pages + 1):
+        for page in range(2, total_pages + 1):
             params["page"] = page
             response = requests.get(habr_url, params=params)
             response.raise_for_status()
