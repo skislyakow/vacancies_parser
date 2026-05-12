@@ -3,25 +3,6 @@ from environs import Env
 from terminaltables import AsciiTable
 
 
-languages = [
-    "Python",
-    "Java",
-    "JavaScript",
-    "C#",
-    "C++",
-    "PHP",
-    "Ruby",
-    "Go",
-    "Rust",
-    "Kotlin",
-    "TypeScript",
-    "Swift",
-]
-
-habr_url = "https://career.habr.com/api/frontend/vacancies"
-superjob_url = "https://api.superjob.ru/2.0/vacancies/"
-
-
 def predict_salary(salary_from, salary_to):
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
@@ -56,7 +37,9 @@ def predict_rub_salary_superjob(vacancy):
     )
 
 
-def parse_from_superjob(superjob_url, superjob_app_id, languages):
+def parse_from_superjob(
+    superjob_url, superjob_app_id, languages, title="SuperJob"
+):
     result = {}
     headers = {"X-Api-App-Id": superjob_app_id}
 
@@ -98,11 +81,11 @@ def parse_from_superjob(superjob_url, superjob_app_id, languages):
             "vacancies_processed": vacancies_processed,
             "average_salary": average_salary,
         }
-    print_statistics(result)
-    return result
+    print_statistics(result, title)
+    print()
 
 
-def parse_from_habr(habr_url):
+def parse_from_habr(habr_url, languages, title="Habr"):
     base_params = {"locations[]": "c_678"}
     result = {}
     for lang in languages:
@@ -124,7 +107,6 @@ def parse_from_habr(habr_url):
             response.raise_for_status()
             data = response.json()
             all_vacancies.extend(data["list"])
-            # time.sleep(0.5)
 
         salaries = []
         for vacancy in all_vacancies:
@@ -143,19 +125,11 @@ def parse_from_habr(habr_url):
             "average_salary": average_salary,
         }
 
-    print_statistics(result)
+    print_statistics(result, title)
     print()
 
-    params_py = {"locations[]": "c_678", "q": "Python"}
-    response_py = requests.get(habr_url, params=params_py)
-    response_py.raise_for_status()
-    data_py = response_py.json()
 
-    for vacancy in data_py["list"]:
-        print(predict_rub_salary(vacancy))
-
-
-def print_statistics(statistics):
+def print_statistics(statistics, title):
     table_data = [
         [
             "Язык программирования",
@@ -174,6 +148,8 @@ def print_statistics(statistics):
             ]
         )
     table = AsciiTable(table_data)
+    table_title = title + "-" * (table.table_width - len(title))
+    print(table_title)
     print(table.table)
 
 
@@ -182,7 +158,28 @@ def main():
     env.read_env()
     superjob_app_id = env.str("SUPERJOB_APP_ID")
 
-    parse_from_superjob(superjob_url, superjob_app_id, languages)
+    languages = [
+        "Python",
+        "Java",
+        "JavaScript",
+        "C",
+        "C#",
+        "C++",
+        "PHP",
+        "Ruby",
+        "Go",
+        "Rust",
+        "Kotlin",
+        "TypeScript",
+        "Swift",
+        "1C",
+    ]
+
+    habr_url = "https://career.habr.com/api/frontend/vacancies"
+    superjob_url = "https://api.superjob.ru/2.0/vacancies/"
+
+    parse_from_habr(habr_url, languages, "Habr")
+    parse_from_superjob(superjob_url, superjob_app_id, languages, "SuperJob")
 
 
 if __name__ == "__main__":
