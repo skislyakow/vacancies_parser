@@ -37,11 +37,13 @@ def predict_rub_salary_superjob(vacancy):
     )
 
 
-def parse_from_superjob(
-    superjob_url, superjob_app_id, languages, title="SuperJob"
-):
+def parse_from_superjob(languages):
+    env = Env()
+    env.read_env()
+    superjob_url = "https://api.superjob.ru/2.0/vacancies/"
+    title = "SuperJob"
     result = {}
-    headers = {"X-Api-App-Id": superjob_app_id}
+    headers = {"X-Api-App-Id": env.str("SUPERJOB_APP_ID")}
 
     for lang in languages:
         all_vacancies = []
@@ -51,7 +53,6 @@ def parse_from_superjob(
                 "page": page,
                 "count": 100,
                 "town": 4,
-                # "catalogues": 33,
                 "keyword": lang,
                 "no_agreement": 1,
             }
@@ -85,7 +86,9 @@ def parse_from_superjob(
     print()
 
 
-def parse_from_habr(habr_url, languages, title="Habr"):
+def parse_from_habr(languages):
+    habr_url = "https://career.habr.com/api/frontend/vacancies"
+    title = "Habr"
     base_params = {"locations[]": "c_678"}
     result = {}
     for lang in languages:
@@ -154,9 +157,6 @@ def print_statistics(statistics, title):
 
 
 def main():
-    env = Env()
-    env.read_env()
-    superjob_app_id = env.str("SUPERJOB_APP_ID")
 
     languages = [
         "Python",
@@ -175,11 +175,8 @@ def main():
         "1C",
     ]
 
-    habr_url = "https://career.habr.com/api/frontend/vacancies"
-    superjob_url = "https://api.superjob.ru/2.0/vacancies/"
-
-    parse_from_habr(habr_url, languages, "Habr")
-    parse_from_superjob(superjob_url, superjob_app_id, languages, "SuperJob")
+    parse_from_habr(languages)
+    parse_from_superjob(languages)
 
 
 if __name__ == "__main__":
