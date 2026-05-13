@@ -3,6 +3,14 @@ from environs import Env
 from terminaltables import AsciiTable
 
 
+HABR_MOSCOW_CITY_ID = "c_678"
+HABR_PER_PAGE = 50
+
+SUPERJOB_MOSCOW_CITY_ID = 4
+SUPERJOB_PER_PAGE = 100
+SUPERJOB_NO_AGREEMENT = 1
+
+
 def predict_salary(salary_from, salary_to):
     if salary_from and salary_to:
         return (salary_from + salary_to) / 2
@@ -39,7 +47,7 @@ def predict_rub_salary_superjob(vacancy):
 
 def get_habr_vacancies(language):
     habr_url = "https://career.habr.com/api/frontend/vacancies"
-    base_params = {"locations[]": "c_678"}
+    base_params = {"locations[]": HABR_MOSCOW_CITY_ID}
 
     params = base_params.copy()
     params["q"] = language
@@ -75,10 +83,10 @@ def get_superjob_vacancies(language):
     while True:
         params = {
             "page": page,
-            "count": 100,
-            "town": 4,
+            "count": SUPERJOB_PER_PAGE,
+            "town": SUPERJOB_MOSCOW_CITY_ID,
             "keyword": language,
-            "no_agreement": 1,
+            "no_agreement": SUPERJOB_NO_AGREEMENT,
         }
         response = requests.get(superjob_url, headers=headers, params=params)
         data = response.json()
