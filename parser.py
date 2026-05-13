@@ -89,6 +89,7 @@ def get_superjob_vacancies(language):
             "no_agreement": SUPERJOB_NO_AGREEMENT,
         }
         response = requests.get(superjob_url, headers=headers, params=params)
+        response.raise_for_status()
         data = response.json()
         vacancies = data.get("objects", [])
         all_vacancies.extend(vacancies)
