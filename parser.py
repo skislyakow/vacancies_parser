@@ -170,7 +170,7 @@ def print_statistics(statistics, title):
             ]
         )
     table = AsciiTable(table_data)
-    table_title = title + "-" * (table.table_width - len(title))
+    table_title = f"{title}{'-' * (table.table_width - len(title))}"
     print(table_title)
     print(table.table)
 
