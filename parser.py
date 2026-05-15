@@ -47,11 +47,12 @@ def predict_rub_salary_superjob(vacancy):
 
 def get_habr_vacancies(language):
     habr_url = "https://career.habr.com/api/frontend/vacancies"
-    base_params = {"locations[]": HABR_MOSCOW_CITY_ID}
 
-    params = base_params.copy()
-    params["q"] = language
-    params["per_page"] = 50
+    params = {
+        "locations[]": HABR_MOSCOW_CITY_ID,
+        "q": language,
+        "per_page": HABR_PER_PAGE,
+    }
 
     response = requests.get(habr_url, params=params)
     response.raise_for_status()
@@ -71,12 +72,8 @@ def get_habr_vacancies(language):
     return vacancies_found, all_vacancies
 
 
-def get_superjob_vacancies(language):
-    env = Env()
-    env.read_env()
-
+def get_superjob_vacancies(language, headers):
     superjob_url = "https://api.superjob.ru/2.0/vacancies/"
-    headers = {"X-Api-App-Id": env.str("SUPERJOB_APP_ID")}
 
     all_vacancies = []
     page = 0
@@ -110,45 +107,41 @@ def calculate_salary_statistics(vacancies, predict_salary_func):
     vacancies_processed = len(salaries)
     average_salary = int(sum(salaries) / len(salaries)) if salaries else None
 
-    return {
-        "vacancies_processed": vacancies_processed,
-        "average_salary": average_salary,
-    }
+    return vacancies_processed, average_salary
 
 
-def parse_from_superjob(languages):
+def parse_from_superjob(languages, superjob_headers):
     salary_statistics = {}
-
     for lang in languages:
-        vacancies_found, all_vacancies = get_superjob_vacancies(lang)
-        statistic = calculate_salary_statistics(
+        vacancies_found, all_vacancies = get_superjob_vacancies(
+            lang, superjob_headers
+        )
+        vacancies_processed, average_salary = calculate_salary_statistics(
             all_vacancies, predict_rub_salary_superjob
         )
         salary_statistics[lang] = {
             "vacancies_found": vacancies_found,
-            "vacancies_processed": statistic["vacancies_processed"],
-            "average_salary": statistic["average_salary"],
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
         }
 
-    print_statistics(salary_statistics, "SuperJob")
-    print()
+    return salary_statistics, "SuperJob"
 
 
 def parse_from_habr(languages):
     salary_statistics = {}
     for lang in languages:
         vacancies_found, all_vacancies = get_habr_vacancies(lang)
-        statistic = calculate_salary_statistics(
+        vacancies_processed, average_salary = calculate_salary_statistics(
             all_vacancies, predict_rub_salary_hh
         )
         salary_statistics[lang] = {
             "vacancies_found": vacancies_found,
-            "vacancies_processed": statistic["vacancies_processed"],
-            "average_salary": statistic["average_salary"],
+            "vacancies_processed": vacancies_processed,
+            "average_salary": average_salary,
         }
 
-    print_statistics(salary_statistics, "Habr")
-    print()
+    return salary_statistics, "Habr"
 
 
 def print_statistics(statistics, title):
@@ -173,9 +166,14 @@ def print_statistics(statistics, title):
     table_title = f"{title}{'-' * (table.table_width - len(title))}"
     print(table_title)
     print(table.table)
+    print()
 
 
 def main():
+    env = Env()
+    env.read_env()
+
+    superjob_headers = {"X-Api-App-Id": env.str("SUPERJOB_APP_ID")}
 
     languages = [
         "Python",
@@ -194,8 +192,8 @@ def main():
         "1C",
     ]
 
-    parse_from_habr(languages)
-    parse_from_superjob(languages)
+    print_statistics(*parse_from_habr(languages))
+    print_statistics(*parse_from_superjob(languages, superjob_headers))
 
 
 if __name__ == "__main__":
