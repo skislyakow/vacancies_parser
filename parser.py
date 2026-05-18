@@ -125,7 +125,7 @@ def parse_from_superjob(languages, superjob_headers):
             "average_salary": average_salary,
         }
 
-    return salary_statistics, "SuperJob"
+    return salary_statistics
 
 
 def parse_from_habr(languages):
@@ -141,7 +141,7 @@ def parse_from_habr(languages):
             "average_salary": average_salary,
         }
 
-    return salary_statistics, "Habr"
+    return salary_statistics
 
 
 def print_statistics(statistics, title):
@@ -192,8 +192,10 @@ def main():
         "1C",
     ]
 
-    print_statistics(*parse_from_habr(languages))
-    print_statistics(*parse_from_superjob(languages, superjob_headers))
+    print_statistics(parse_from_habr(languages), "Habr")
+    print_statistics(
+        parse_from_superjob(languages, superjob_headers), "SuperJob"
+    )
 
 
 if __name__ == "__main__":
